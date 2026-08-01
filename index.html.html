@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SIC 1 — Contabilidad</title>
+<meta name="theme-color" content="#2E4A7A">
+<link rel="manifest" id="manifestLink">
+<link rel="apple-touch-icon" id="appleIcon">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SIC 1">
+<style>
+  :root{
+    --navy:#2E4A7A;
+    --navy-dark:#20355a;
+    --lightblue:#D6E4F0;
+    --lightblue-soft:#EEF4FA;
+    --yellow:#FFF2CC;
+    --yellow-strong:#F5C242;
+    --green:#E2EFDA;
+    --green-strong:#4C8C4A;
+    --red:#C0392B;
+    --grey:#F2F2F2;
+    --ink:#1E2A3A;
+    --ink-soft:#5B6B82;
+    --white:#FFFFFF;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;background:var(--grey);}
+  body{
+    font-family:Arial, Helvetica, sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:78px;
+  }
+  header.app-header{
+    background:linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%);
+    color:#fff;
+    padding:14px 16px 12px;
+    position:sticky;
+    top:0;
+    z-index:20;
+    box-shadow:0 2px 8px rgba(0,0,0,.15);
+  }
+  header.app-header h1{
+    margin:0;
+    font-size:17px;
+    font-weight:700;
+    letter-spacing:.2px;
+  }
+  header.app-header p{
+    margin:2px 0 0;
+    font-size:11.5px;
+    color:#C9D6EA;
+    font-style:italic;
+  }
+  .company-bar{
+    background:#fff;
+    padding:10px 16px;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    border-bottom:1px solid #e2e2e2;
+    position:sticky;
+    top:57px;
+    z-index:19;
+  }
+  .company-bar input{
+    flex:1;
+    border:1px solid #d5d5d5;
+    border-radius:8px;
+    padding:8px 10px;
+    font-family:Arial;
+    font-size:13px;
+    background:#fafafa;
+  }
+  .company-bar input:focus{outline:2px solid var(--navy);background:#fff;}
+
+  main{padding:12px;max-width:720px;margin:0 auto;}
+
+  .card{
+    background:#fff;
+    border-radius:var(--radius);
+    box-shadow:0 1px 4px rgba(0,0,0,.08);
+    margin-bottom:14px;
+    overflow:hidden;
+  }
+  .card-title{
+    background:var(--navy);
+    color:#fff;
+    font-size:13.5px;
+    font-weight:700;
+    padding:10px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .card-title small{font-weight:400;font-size:11px;color:#C9D6EA;}
+  .card-body{padding:12px 14px;}
+
+  /* ---- Diario: lista de asientos tipo tarjeta (mobile-first, no tabla ancha) ---- */
+  .asiento{
+    border:1px solid #e6e6e6;
+    border-left:4px solid var(--navy);
+    border-radius:8px;
+    margin-bottom:10px;
+    padding:10px 12px;
+    background:#fcfcfd;
+  }
+  .asiento-head{
+    display:flex;
+    justify-content:space-between;
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .asiento-head b{color:var(--navy);}
+  .linea{
+    display:grid;
+    grid-template-columns:1fr 78px 78px 26px;
+    gap:6px;
+    align-items:center;
+    margin-bottom:5px;
+  }
+  .linea input[type=text]{
+    border:1px solid #ddd;border-radius:6px;padding:7px 8px;font-size:12.5px;font-family:Arial;
+    background:#fff;
+  }
+  .linea.haber input[type=text]{padding-left:16px;color:#333;}
+  .linea input[type=number]{
+    border:1px solid #ddd;border-radius:6px;padding:7px 6px;font-size:12.5px;font-family:Arial;
+    text-align:right;background:#fff;width:100%;
+  }
+  .linea button.del-line{
+    background:none;border:none;color:#c0392b;font-size:16px;cursor:pointer;padding:0;
+  }
+  .asiento-foot{
+    display:flex;justify-content:space-between;align-items:center;margin-top:8px;
+    font-size:11px;
+  }
+  .asiento-foot .glosa{
+    flex:1;border:none;border-bottom:1px dashed #ccc;font-size:11.5px;font-style:italic;
+    font-family:Arial;padding:4px 2px;color:#555;background:transparent;margin-right:8px;
+  }
+  .badge-ok{color:var(--green-strong);font-weight:700;}
+  .badge-bad{color:var(--red);font-weight:700;}
+
+  .btn{
+    border:none;border-radius:8px;padding:9px 14px;font-family:Arial;font-weight:700;
+    font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn-primary{background:var(--navy);color:#fff;}
+  .btn-secondary{background:var(--lightblue);color:var(--navy);}
+  .btn-ghost{background:transparent;color:var(--navy);border:1px solid var(--navy);}
+  .btn-sm{padding:6px 10px;font-size:11.5px;}
+  .btn-block{width:100%;justify-content:center;}
+  .btn-add-line{background:#fff;border:1px dashed #aab7c9;color:var(--navy);width:100%;
+    padding:7px;border-radius:6px;font-size:12px;font-family:Arial;cursor:pointer;margin-top:2px;}
+
+  .row-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+
+  .totales-diario{
+    background:var(--lightblue-soft);border-radius:8px;padding:10px 12px;
+    display:flex;justify-content:space-between;align-items:center;font-size:12.5px;margin-top:4px;
+  }
+  .totales-diario .num{font-weight:700;color:var(--navy);}
+
+  /* ---- Mayor ---- */
+  .cuenta-t{
+    border:1px solid #e6e6e6;border-radius:8px;margin-bottom:10px;overflow:hidden;
+  }
+  .cuenta-t h3{
+    margin:0;background:var(--lightblue);color:var(--navy);font-size:13px;padding:8px 12px;
+    display:flex;justify-content:space-between;
+  }
+  table.t-table{width:100%;border-collapse:collapse;font-size:12px;}
+  table.t-table th{
+    background:#f7f9fc;color:var(--ink-soft);font-size:10.5px;text-transform:uppercase;
+    padding:5px 8px;text-align:right;border-bottom:1px solid #eee;
+  }
+  table.t-table th:first-child{text-align:left;}
+  table.t-table td{padding:5px 8px;border-bottom:1px solid #f1f1f1;text-align:right;}
+  table.t-table td:first-child{text-align:left;color:#555;}
+  table.t-table tfoot td{font-weight:700;background:#fafbfc;}
+  .saldo-line{
+    display:flex;justify-content:space-between;padding:8px 12px;font-size:12.5px;
+    background:var(--green);font-weight:700;color:#2d5a2b;
+  }
+  .saldo-line.acreedor{background:#FDEDEC;color:#943126;}
+  .no-data{color:#999;font-size:12px;font-style:italic;padding:10px 12px;}
+
+  /* ---- Balance 12 columnas: tabla horizontal con scroll ---- */
+  .scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table.balance{border-collapse:collapse;font-size:11px;min-width:680px;width:100%;}
+  table.balance th{
+    background:var(--navy);color:#fff;padding:6px 8px;font-size:10px;text-align:center;
+    border:1px solid #3a5a90;
+  }
+  table.balance th.grp{background:var(--navy-dark);}
+  table.balance td{padding:5px 7px;border:1px solid #eee;text-align:right;white-space:nowrap;}
+  table.balance td.cuenta{text-align:left;font-weight:600;color:var(--ink);background:#fafbfc;
+    position:sticky;left:0;min-width:130px;}
+  table.balance tr:nth-child(even) td{background:#fbfbfc;}
+  table.balance tr:nth-child(even) td.cuenta{background:#f3f6fa;}
+  table.balance tfoot td{font-weight:700;background:var(--lightblue-soft);}
+  table.balance tfoot td.cuenta{background:var(--lightblue);}
+
+  .controles{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;
+  }
+  .control-item{
+    background:#fafbfc;border:1px solid #eee;border-radius:8px;padding:8px 10px;font-size:11.5px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .control-item span.val{font-weight:700;}
+  .resultado-box{
+    margin-top:10px;background:var(--green);border-radius:8px;padding:10px 12px;
+    text-align:center;font-weight:700;color:#2d5a2b;font-size:13px;
+  }
+  .resultado-box.negativo{background:#FDEDEC;color:#943126;}
+
+  /* ---- Tabs inferiores ---- */
+  nav.tabbar{
+    position:fixed;bottom:0;left:0;right:0;
+    background:#fff;border-top:1px solid #e2e2e2;
+    display:flex;
+    box-shadow:0 -2px 10px rgba(0,0,0,.06);
+    z-index:30;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  nav.tabbar button{
+    flex:1;border:none;background:none;padding:10px 4px 8px;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    font-family:Arial;font-size:10.5px;color:#93a0b3;cursor:pointer;
+  }
+  nav.tabbar button .ic{font-size:19px;line-height:1;}
+  nav.tabbar button.active{color:var(--navy);font-weight:700;}
+  nav.tabbar button.active .ic{filter:none;}
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .empty-state{
+    text-align:center;padding:34px 20px;color:var(--ink-soft);
+  }
+  .empty-state .ic{font-size:34px;margin-bottom:8px;opacity:.5;}
+  .empty-state p{font-size:12.5px;margin:4px 0;}
+
+  .toast{
+    position:fixed;bottom:86px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--navy);color:#fff;padding:9px 18px;border-radius:20px;font-size:12.5px;
+    box-shadow:0 4px 14px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:.25s;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .install-banner{
+    background:var(--yellow);color:#6b5300;padding:10px 14px;font-size:12px;
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+  }
+  .install-banner button{background:var(--navy);color:#fff;border:none;border-radius:6px;
+    padding:6px 10px;font-size:11px;font-family:Arial;font-weight:700;white-space:nowrap;}
+  .install-banner .close-banner{background:transparent;color:#6b5300;border:none;font-size:16px;padding:0 4px;}
+
+  select.method-select{
+    border:1px solid #ddd;border-radius:6px;padding:6px 8px;font-family:Arial;font-size:12px;
+    background:#fff;color:var(--navy);font-weight:700;
+  }
+
+  .legend-note{font-size:10.5px;color:#8a95a5;font-style:italic;margin-top:8px;line-height:1.4;}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Sistema de Información Contable I</h1>
+  <p>Diario · Mayor · Balance de 12 columnas</p>
+</header>
+
+<div class="company-bar">
+  <input id="empresaInput" type="text" placeholder="Nombre de la empresa (ej. Distribuidora Norte S.A.)">
+</div>
+
+<div id="installBanner" class="install-banner" style="display:none;">
+  <span>📲 Instalá esta app en tu pantalla de inicio para usarla sin conexión.</span>
+  <div style="display:flex;gap:6px;">
+    <button id="installBtn">Instalar</button>
+    <button class="close-banner" id="closeBanner">✕</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ============ VISTA: DIARIO ============ -->
+  <section id="view-diario" class="view active">
+    <div class="card">
+      <div class="card-title">
+        <span>📗 Libro Diario</span>
+        <small id="cantAsientos">0 asientos</small>
+      </div>
+      <div class="card-body" id="asientosContainer">
+        <div class="empty-state" id="diarioEmpty">
+          <div class="ic">🧾</div>
+          <p><b>Todavía no cargaste asientos.</b></p>
+          <p>Tocá "Nuevo asiento" para registrar tu primera operación.</p>
+        </div>
+      </div>
+      <div class="card-body" style="padding-top:0;">
+        <button class="btn btn-primary btn-block" id="btnNuevoAsiento">+ Nuevo asiento</button>
+        <div class="totales-diario">
+          <span>Totales del Diario</span>
+          <span>Debe <span class="num" id="totDiarioDebe">$0,00</span> · Haber <span class="num" id="totDiarioHaber">$0,00</span>
+            — <span id="chkDiario" class="badge-ok">OK</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VISTA: MAYOR ============ -->
+  <section id="view-mayor" class="view">
+    <div class="card">
+      <div class="card-title"><span>📘 Libro Mayor</span><small>Se genera automáticamente del Diario</small></div>
+      <div class="card-body" id="mayorContainer">
+        <div class="empty-state">
+          <div class="ic">📘</div>
+          <p>Cargá asientos en el Libro Diario para ver acá las cuentas T.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VISTA: BALANCE ============ -->
+  <section id="view-balance" class="view">
+    <div class="card">
+      <div class="card-title"><span>📊 Balance de 12 Columnas</span></div>
+      <div class="card-body">
+        <p class="legend-note" style="margin-top:0;">Sumas y Saldos se calculan solos desde el Mayor. Clasificá cada cuenta como Activo, Pasivo, Pérdida o Ganancia tocando el botón junto a su nombre.</p>
+        <div class="scroll-x">
+          <table class="balance" id="balanceTable">
+            <thead>
+              <tr>
+                <th rowspan="2" class="cuenta">Cuenta</th>
+                <th colspan="2" class="grp">Sumas</th>
+                <th colspan="2" class="grp">Saldos</th>
+                <th colspan="2" class="grp">Patrimonial</th>
+                <th colspan="2" class="grp">Resultados</th>
+              </tr>
+              <tr>
+                <th>Debe</th><th>Haber</th>
+                <th>Deudor</th><th>Acreedor</th>
+                <th>Activo</th><th>Pasivo</th>
+                <th>Pérdida</th><th>Ganancia</th>
+              </tr>
+            </thead>
+            <tbody id="balanceBody">
+              <tr><td colspan="9" class="no-data">Sin cuentas todavía.</td></tr>
+            </tbody>
+            <tfoot id="balanceFoot"></tfoot>
+          </table>
+        </div>
+        <div class="controles" id="controlesBalance"></div>
+        <div class="resultado-box" id="resultadoEjercicio" style="display:none;"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<nav class="tabbar">
+  <button class="tab-btn active" data-view="diario"><span class="ic">🧾</span>Diario</button>
+  <button class="tab-btn" data-view="mayor"><span class="ic">📘</span>Mayor</button>
+  <button class="tab-btn" data-view="balance"><span class="ic">📊</span>Balance</button>
+</nav>
+
+<script>
+/* =========================================================
+   ESTADO Y PERSISTENCIA (localStorage — cada dispositivo guarda lo suyo)
+========================================================= */
+const STORAGE_KEY = 'sic1_contabilidad_v1';
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { empresa:'', asientos:[], clasificacion:{} };
+}
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+let state = loadState();
+let asientoCounter = state.asientos.length
+  ? Math.max(...state.asientos.map(a=>a.numero)) : 0;
+
+/* =========================================================
+   UTILIDADES
+========================================================= */
+function money(n){
+  n = Number(n)||0;
+  return n.toLocaleString('es-AR', {style:'currency', currency:'ARS', minimumFractionDigits:2});
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._tm);
+  showToast._tm = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* =========================================================
+   NAVEGACIÓN DE TABS
+========================================================= */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    if(btn.dataset.view === 'mayor') renderMayor();
+    if(btn.dataset.view === 'balance') renderBalance();
+  });
+});
+
+/* =========================================================
+   NOMBRE DE EMPRESA
+========================================================= */
+const empresaInput = document.getElementById('empresaInput');
+empresaInput.value = state.empresa || '';
+empresaInput.addEventListener('input', ()=>{
+  state.empresa = empresaInput.value;
+  saveState();
+});
+
+/* =========================================================
+   LIBRO DIARIO
+========================================================= */
+const asientosContainer = document.getElementById('asientosContainer');
+const diarioEmpty = document.getElementById('diarioEmpty');
+
+function nuevoAsiento(){
+  asientoCounter++;
+  const asiento = {
+    numero: asientoCounter,
+    fecha: new Date().toISOString().slice(0,10),
+    glosa: '',
+    lineas: [
+      {cuenta:'', tipo:'debe', importe:''},
+      {cuenta:'', tipo:'haber', importe:''}
+    ]
+  };
+  state.asientos.push(asiento);
+  saveState();
+  renderDiario();
+}
+document.getElementById('btnNuevoAsiento').addEventListener('click', nuevoAsiento);
+
+function eliminarAsiento(numero){
+  if(!confirm('¿Eliminar este asiento? Esta acción no se puede deshacer.')) return;
+  state.asientos = state.asientos.filter(a=>a.numero!==numero);
+  saveState();
+  renderDiario();
+}
+
+function agregarLinea(numero, tipo){
+  const a = state.asientos.find(x=>x.numero===numero);
+  a.lineas.push({cuenta:'', tipo, importe:''});
+  saveState();
+  renderDiario();
+}
+function eliminarLinea(numero, idx){
+  const a = state.asientos.find(x=>x.numero===numero);
+  a.lineas.splice(idx,1);
+  saveState();
+  renderDiario();
+}
+
+function renderDiario(){
+  asientosContainer.innerHTML = '';
+  if(state.asientos.length === 0){
+    diarioEmpty.style.display = 'block';
+    asientosContainer.appendChild(diarioEmpty);
+  } else {
+    diarioEmpty.style.display = 'none';
+  }
+
+  let totDebe = 0, totHaber = 0;
+
+  state.asientos.forEach(a=>{
+    const div = document.createElement('div');
+    div.className = 'asiento';
+
+    let subDebe = 0, subHaber = 0;
+    a.lineas.forEach(l=>{
+      const v = parseFloat(l.importe)||0;
+      if(l.tipo==='debe') subDebe += v; else subHaber += v;
+    });
+    totDebe += subDebe; totHaber += subHaber;
+    const cuadra = Math.abs(subDebe - subHaber) < 0.005 && subDebe > 0;
+
+    div.innerHTML = `
+      <div class="asiento-head">
+        <span><b>Asiento N° ${a.numero}</b></span>
+        <input type="date" value="${a.fecha}" data-numero="${a.numero}" class="fecha-input"
+          style="border:none;background:transparent;font-size:11px;color:#5B6B82;font-family:Arial;">
+      </div>
+      <div class="lineas-wrap" data-numero="${a.numero}"></div>
+      <button class="btn-add-line" data-numero="${a.numero}" data-tipo="debe">+ Línea Debe</button>
+      <button class="btn-add-line" data-numero="${a.numero}" data-tipo="haber">+ Línea Haber</button>
+      <div class="asiento-foot">
+        <input type="text" class="glosa" placeholder="Glosa (detalle de la operación)"
+          value="${a.glosa||''}" data-numero="${a.numero}">
+        <span>${subDebe>0||subHaber>0 ? (cuadra ? '<span class=\"badge-ok\">✓ Cuadra</span>' : '<span class=\"badge-bad\">✗ No cuadra</span>') : ''}</span>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:6px;">
+        <button class="btn btn-ghost btn-sm" data-del-asiento="${a.numero}">Eliminar asiento</button>
+      </div>
+    `;
+    asientosContainer.appendChild(div);
+
+    const wrap = div.querySelector('.lineas-wrap');
+    a.lineas.forEach((l, idx)=>{
+      const row = document.createElement('div');
+      row.className = 'linea' + (l.tipo==='haber' ? ' haber' : '');
+      row.innerHTML = `
+        <input type="text" placeholder="${l.tipo==='debe' ? 'Cuenta (Debe)' : '   a Cuenta (Haber)'}"
+          value="${l.cuenta||''}" data-numero="${a.numero}" data-idx="${idx}" data-field="cuenta">
+        <input type="number" placeholder="${l.tipo==='debe' ? '0,00' : ''}" step="0.01"
+          value="${l.tipo==='debe' ? (l.importe||'') : ''}"
+          data-numero="${a.numero}" data-idx="${idx}" data-field="debe" ${l.tipo!=='debe'?'disabled style="background:#f5f5f5;"':''}>
+        <input type="number" placeholder="${l.tipo==='haber' ? '0,00' : ''}" step="0.01"
+          value="${l.tipo==='haber' ? (l.importe||'') : ''}"
+          data-numero="${a.numero}" data-idx="${idx}" data-field="haber" ${l.tipo!=='haber'?'disabled style="background:#f5f5f5;"':''}>
+        <button class="del-line" data-numero="${a.numero}" data-idx="${idx}">✕</button>
+      `;
+      wrap.appendChild(row);
+    });
+  });
+
+  document.getElementById('cantAsientos').textContent = state.asientos.length + ' asiento' + (state.asientos.length===1?'':'s');
+  document.getElementById('totDiarioDebe').textContent = money(totDebe);
+  document.getElementById('totDiarioHaber').textContent = money(totHaber);
+  const chk = document.getElementById('chkDiario');
+  const ok = Math.abs(totDebe-totHaber) < 0.005;
+  chk.textContent = ok ? 'OK' : 'REVISAR';
+  chk.className = ok ? 'badge-ok' : 'badge-bad';
+
+  wireDiarioEvents();
+}
+
+function wireDiarioEvents(){
+  asientosContainer.querySelectorAll('[data-del-asiento]').forEach(b=>{
+    b.onclick = ()=>eliminarAsiento(Number(b.dataset.delAsiento));
+  });
+  asientosContainer.querySelectorAll('.btn-add-line').forEach(b=>{
+    b.onclick = ()=>agregarLinea(Number(b.dataset.numero), b.dataset.tipo);
+  });
+  asientosContainer.querySelectorAll('.del-line').forEach(b=>{
+    b.onclick = ()=>eliminarLinea(Number(b.dataset.numero), Number(b.dataset.idx));
+  });
+  asientosContainer.querySelectorAll('.fecha-input').forEach(inp=>{
+    inp.onchange = ()=>{
+      const a = state.asientos.find(x=>x.numero===Number(inp.dataset.numero));
+      a.fecha = inp.value; saveState();
+    };
+  });
+  asientosContainer.querySelectorAll('.glosa').forEach(inp=>{
+    inp.oninput = ()=>{
+      const a = state.asientos.find(x=>x.numero===Number(inp.dataset.numero));
+      a.glosa = inp.value; saveState();
+    };
+  });
+  asientosContainer.querySelectorAll('input[data-field="cuenta"]').forEach(inp=>{
+    inp.oninput = ()=>{
+      const a = state.asientos.find(x=>x.numero===Number(inp.dataset.numero));
+      a.lineas[Number(inp.dataset.idx)].cuenta = inp.value;
+      saveState();
+    };
+  });
+  asientosContainer.querySelectorAll('input[data-field="debe"], input[data-field="haber"]').forEach(inp=>{
+    inp.oninput = ()=>{
+      const a = state.asientos.find(x=>x.numero===Number(inp.dataset.numero));
+      a.lineas[Number(inp.dataset.idx)].importe = inp.value;
+      saveState();
+      renderDiarioTotalsOnly();
+    };
+  });
+}
+
+// Actualiza solo los totales/badges sin re-renderizar todo (evita perder foco al tipear)
+function renderDiarioTotalsOnly(){
+  let totDebe=0, totHaber=0;
+  state.asientos.forEach(a=>{
+    let subDebe=0, subHaber=0;
+    a.lineas.forEach(l=>{
+      const v = parseFloat(l.importe)||0;
+      if(l.tipo==='debe') subDebe+=v; else subHaber+=v;
+    });
+    totDebe+=subDebe; totHaber+=subHaber;
+  });
+  document.getElementById('totDiarioDebe').textContent = money(totDebe);
+  document.getElementById('totDiarioHaber').textContent = money(totHaber);
+  const chk = document.getElementById('chkDiario');
+  const ok = Math.abs(totDebe-totHaber) < 0.005;
+  chk.textContent = ok ? 'OK' : 'REVISAR';
+  chk.className = ok ? 'badge-ok' : 'badge-bad';
+}
+
+/* =========================================================
+   LIBRO MAYOR (derivado del Diario)
+========================================================= */
+function getCuentasUnicas(){
+  const map = {};
+  state.asientos.forEach(a=>{
+    a.lineas.forEach(l=>{
+      const nombre = (l.cuenta||'').trim();
+      if(!nombre) return;
+      const v = parseFloat(l.importe)||0;
+      if(v<=0) return;
+      if(!map[nombre]) map[nombre] = {debe:0, haber:0, movs:[]};
+      if(l.tipo==='debe'){ map[nombre].debe += v; }
+      else { map[nombre].haber += v; }
+      map[nombre].movs.push({fecha:a.fecha, numero:a.numero, tipo:l.tipo, importe:v});
+    });
+  });
+  return map;
+}
+
+function renderMayor(){
+  const cont = document.getElementById('mayorContainer');
+  const cuentas = getCuentasUnicas();
+  const nombres = Object.keys(cuentas).sort((a,b)=>a.localeCompare(b,'es'));
+
+  if(nombres.length===0){
+    cont.innerHTML = `<div class="empty-state"><div class="ic">📘</div>
+      <p>Cargá asientos en el Libro Diario para ver acá las cuentas T.</p></div>`;
+    return;
+  }
+
+  cont.innerHTML = '';
+  nombres.forEach(nombre=>{
+    const c = cuentas[nombre];
+    const saldo = c.debe - c.haber;
+    const esDeudor = saldo >= 0;
+    const div = document.createElement('div');
+    div.className = 'cuenta-t';
+    let filas = '';
+    c.movs.sort((a,b)=> (a.fecha||'').localeCompare(b.fecha||''));
+    c.movs.forEach(m=>{
+      filas += `<tr>
+        <td>${m.fecha} · Asto. ${m.numero}</td>
+        <td>${m.tipo==='debe' ? money(m.importe) : ''}</td>
+        <td>${m.tipo==='haber' ? money(m.importe) : ''}</td>
+      </tr>`;
+    });
+    div.innerHTML = `
+      <h3><span>${nombre}</span></h3>
+      <table class="t-table">
+        <thead><tr><th>Movimiento</th><th>Debe</th><th>Haber</th></tr></thead>
+        <tbody>${filas}</tbody>
+        <tfoot><tr><td>Totales</td><td>${money(c.debe)}</td><td>${money(c.haber)}</td></tr></tfoot>
+      </table>
+      <div class="saldo-line ${esDeudor?'':'acreedor'}">
+        <span>Saldo</span><span>${money(Math.abs(saldo))} (${esDeudor?'Deudor':'Acreedor'})</span>
+      </div>
+    `;
+    cont.appendChild(div);
+  });
+}
+
+/* =========================================================
+   BALANCE DE 12 COLUMNAS (derivado del Mayor)
+========================================================= */
+function renderBalance(){
+  const cuentas = getCuentasUnicas();
+  const nombres = Object.keys(cuentas).sort((a,b)=>a.localeCompare(b,'es'));
+  const tbody = document.getElementById('balanceBody');
+  const tfoot = document.getElementById('balanceFoot');
+
+  if(nombres.length===0){
+    tbody.innerHTML = `<tr><td colspan="9" class="no-data">Sin cuentas todavía. Cargá asientos en el Diario.</td></tr>`;
+    tfoot.innerHTML = '';
+    document.getElementById('controlesBalance').innerHTML = '';
+    document.getElementById('resultadoEjercicio').style.display = 'none';
+    return;
+  }
+
+  let totB=0, totC=0, totD=0, totE=0, totF=0, totG=0, totH=0, totI=0;
+
+  tbody.innerHTML = '';
+  nombres.forEach(nombre=>{
+    const c = cuentas[nombre];
+    const deudor = c.debe >= c.haber ? c.debe - c.haber : 0;
+    const acreedor = c.haber > c.debe ? c.haber - c.debe : 0;
+    totB += c.debe; totC += c.haber; totD += deudor; totE += acreedor;
+
+    const clasif = state.clasificacion[nombre] || null; // 'activo'|'pasivo'|'perdida'|'ganancia'
+    let activo=0, pasivo=0, perdida=0, ganancia=0;
+    if(clasif==='activo'){ activo = deudor; }
+    else if(clasif==='pasivo'){ pasivo = acreedor; }
+    else if(clasif==='perdida'){ perdida = deudor; }
+    else if(clasif==='ganancia'){ ganancia = acreedor; }
+    totF+=activo; totG+=pasivo; totH+=perdida; totI+=ganancia;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="cuenta">
+        ${nombre}<br>
+        <select class="method-select clasif-select" data-cuenta="${nombre}" style="margin-top:3px;font-size:10px;padding:3px 4px;">
+          <option value="" ${!clasif?'selected':''}>Clasificar…</option>
+          <option value="activo" ${clasif==='activo'?'selected':''}>Activo</option>
+          <option value="pasivo" ${clasif==='pasivo'?'selected':''}>Pasivo</option>
+          <option value="perdida" ${clasif==='perdida'?'selected':''}>Pérdida</option>
+          <option value="ganancia" ${clasif==='ganancia'?'selected':''}>Ganancia</option>
+        </select>
+      </td>
+      <td>${money(c.debe)}</td>
+      <td>${money(c.haber)}</td>
+      <td>${deudor>0?money(deudor):'—'}</td>
+      <td>${acreedor>0?money(acreedor):'—'}</td>
+      <td>${activo>0?money(activo):'—'}</td>
+      <td>${pasivo>0?money(pasivo):'—'}</td>
+      <td>${perdida>0?money(perdida):'—'}</td>
+      <td>${ganancia>0?money(ganancia):'—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tfoot.innerHTML = `<tr>
+    <td class="cuenta">TOTALES</td>
+    <td>${money(totB)}</td><td>${money(totC)}</td>
+    <td>${money(totD)}</td><td>${money(totE)}</td>
+    <td>${money(totF)}</td><td>${money(totG)}</td>
+    <td>${money(totH)}</td><td>${money(totI)}</td>
+  </tr>`;
+
+  const resultado = totI - totH; // ganancia positiva si I>H
+  const okSumas = Math.abs(totB-totC) < 0.005;
+  const okSaldos = Math.abs(totD-totE) < 0.005;
+  // Patrimonial cuadra sólo si se suma el resultado del ejercicio al lado que corresponde
+  const patrimActivoFinal = totF + (resultado<0 ? Math.abs(resultado) : 0);
+  const patrimPasivoFinal = totG + (resultado>0 ? resultado : 0);
+  const okPatrim = Math.abs(patrimActivoFinal - patrimPasivoFinal) < 0.005;
+
+  document.getElementById('controlesBalance').innerHTML = `
+    <div class="control-item"><span>Sumas (B=C)</span><span class="val ${okSumas?'badge-ok':'badge-bad'}">${okSumas?'OK':'REVISAR'}</span></div>
+    <div class="control-item"><span>Saldos (D=E)</span><span class="val ${okSaldos?'badge-ok':'badge-bad'}">${okSaldos?'OK':'REVISAR'}</span></div>
+    <div class="control-item"><span>Patrimonial (+Rdo.)</span><span class="val ${okPatrim?'badge-ok':'badge-bad'}">${okPatrim?'OK':'REVISAR'}</span></div>
+    <div class="control-item"><span>Cuentas clasificadas</span><span class="val">${nombres.filter(n=>state.clasificacion[n]).length}/${nombres.length}</span></div>
+  `;
+
+  const resBox = document.getElementById('resultadoEjercicio');
+  if(totH>0 || totI>0){
+    resBox.style.display = 'block';
+    resBox.className = 'resultado-box' + (resultado<0 ? ' negativo' : '');
+    resBox.textContent = resultado>=0
+      ? `Resultado del Ejercicio: Ganancia ${money(resultado)}`
+      : `Resultado del Ejercicio: Pérdida ${money(Math.abs(resultado))}`;
+  } else {
+    resBox.style.display = 'none';
+  }
+
+  tbody.querySelectorAll('.clasif-select').forEach(sel=>{
+    sel.onchange = ()=>{
+      const cuenta = sel.dataset.cuenta;
+      if(sel.value){ state.clasificacion[cuenta] = sel.value; }
+      else { delete state.clasificacion[cuenta]; }
+      saveState();
+      renderBalance();
+    };
+  });
+}
+
+/* =========================================================
+   INSTALACIÓN COMO APP (PWA) — banner "Agregar a pantalla de inicio"
+========================================================= */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').style.display = 'flex';
+});
+document.getElementById('installBtn').addEventListener('click', async ()=>{
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    document.getElementById('installBanner').style.display = 'none';
+  }
+});
+document.getElementById('closeBanner').addEventListener('click', ()=>{
+  document.getElementById('installBanner').style.display = 'none';
+});
+// iOS Safari no dispara beforeinstallprompt: mostramos instrucciones si es iOS y no está instalada
+function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+function isStandalone(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone; }
+if(isIOS() && !isStandalone()){
+  const b = document.getElementById('installBanner');
+  b.style.display = 'flex';
+  b.querySelector('span').textContent = '📲 En iPhone: tocá Compartir → "Agregar a pantalla de inicio".';
+  document.getElementById('installBtn').style.display = 'none';
+}
+
+/* =========================================================
+   MANIFEST + SERVICE WORKER (generados dinámicamente para un solo archivo)
+========================================================= */
+const manifest = {
+  name: "SIC 1 — Contabilidad",
+  short_name: "SIC 1",
+  start_url: "./",
+  display: "standalone",
+  background_color: "#2E4A7A",
+  theme_color: "#2E4A7A",
+  icons: [
+    {src: makeIcon(192), sizes: "192x192", type: "image/png"},
+    {src: makeIcon(512), sizes: "512x512", type: "image/png"}
+  ]
+};
+function makeIcon(size){
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#2E4A7A';
+  ctx.fillRect(0,0,size,size);
+  ctx.fillStyle = '#D6E4F0';
+  ctx.font = 'bold ' + Math.round(size*0.42) + 'px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('SIC', size/2, size*0.44);
+  ctx.font = 'bold ' + Math.round(size*0.18) + 'px Arial';
+  ctx.fillText('1', size/2, size*0.72);
+  return canvas.toDataURL('image/png');
+}
+const manifestBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+document.getElementById('manifestLink').href = URL.createObjectURL(manifestBlob);
+document.getElementById('appleIcon').href = makeIcon(180);
+
+// Service worker mínimo embebido (cachea el propio documento para uso offline)
+if('serviceWorker' in navigator){
+  const swCode = `
+    const CACHE = 'sic1-v1';
+    self.addEventListener('install', e=>{ self.skipWaiting(); });
+    self.addEventListener('activate', e=>{ self.clients.claim(); });
+    self.addEventListener('fetch', e=>{
+      e.respondWith(
+        caches.match(e.request).then(cached=>{
+          const fetchPromise = fetch(e.request).then(res=>{
+            caches.open(CACHE).then(c=>c.put(e.request, res.clone()));
+            return res;
+          }).catch(()=>cached);
+          return cached || fetchPromise;
+        })
+      );
+    });
+  `;
+  const swBlob = new Blob([swCode], {type:'application/javascript'});
+  const swUrl = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).catch(()=>{ /* silencioso: sigue funcionando sin SW */ });
+}
+
+/* =========================================================
+   INICIALIZACIÓN
+========================================================= */
+renderDiario();
+</script>
+</body>
+</html>
