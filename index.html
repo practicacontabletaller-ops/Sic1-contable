@@ -43,7 +43,30 @@
     top:0;
     z-index:20;
     box-shadow:0 2px 8px rgba(0,0,0,.15);
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
   }
+  header.app-header .titles{flex:1;min-width:0;}
+  .btn-reporte{
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.35);
+    color:#fff;
+    border-radius:8px;
+    padding:8px 10px;
+    font-family:Arial;
+    font-size:11px;
+    font-weight:700;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    cursor:pointer;
+    flex-shrink:0;
+    line-height:1.1;
+  }
+  .btn-reporte .ic{font-size:16px;}
   header.app-header h1{
     margin:0;
     font-size:17px;
@@ -269,13 +292,62 @@
   }
 
   .legend-note{font-size:10.5px;color:#8a95a5;font-style:italic;margin-top:8px;line-height:1.4;}
+
+  /* =========================================================
+     REPORTE IMPRIMIBLE / PDF
+  ========================================================= */
+  #reportView{display:none;}
+
+  @media print{
+    body *{ visibility:hidden; }
+    #reportView, #reportView *{ visibility:visible; }
+    #reportView{
+      display:block !important;
+      position:absolute; top:0; left:0; width:100%;
+      padding:0; margin:0;
+    }
+    header.app-header, .company-bar, nav.tabbar, .install-banner, .toast{ display:none !important; }
+    @page{ margin:14mm 10mm; }
+  }
+
+  .rep-header{
+    background:var(--navy); color:#fff; padding:14px 18px; border-radius:8px; margin-bottom:14px;
+  }
+  .rep-header h1{margin:0 0 2px;font-size:17px;}
+  .rep-header p{margin:0;font-size:11px;color:#C9D6EA;}
+  .rep-section{margin-bottom:22px; page-break-inside:avoid;}
+  .rep-section-title{
+    background:var(--lightblue); color:var(--navy); font-weight:700; font-size:13px;
+    padding:7px 12px; border-radius:6px; margin-bottom:8px;
+  }
+  .rep-page-break{page-break-before:always;}
+  table.rep-table{width:100%; border-collapse:collapse; font-size:10.5px; margin-bottom:6px;}
+  table.rep-table th{background:var(--navy); color:#fff; padding:5px 7px; text-align:right; font-size:9.5px;}
+  table.rep-table th:first-child, table.rep-table td:first-child{text-align:left;}
+  table.rep-table td{padding:4px 7px; border-bottom:1px solid #eee; text-align:right;}
+  table.rep-table tfoot td{font-weight:700; background:#f5f7fa;}
+  .rep-asiento-glosa{font-size:9.5px; color:#777; font-style:italic; padding:2px 7px 6px;}
+  .rep-cuenta-t{border:1px solid #ddd; border-radius:6px; margin-bottom:10px; overflow:hidden; page-break-inside:avoid;}
+  .rep-cuenta-t h4{margin:0; background:var(--lightblue); color:var(--navy); font-size:11.5px; padding:5px 10px;}
+  .rep-saldo{padding:5px 10px; font-size:11px; font-weight:700; background:var(--green); color:#2d5a2b;}
+  .rep-saldo.acreedor{background:#FDEDEC; color:#943126;}
+  .rep-resultado{background:var(--green); color:#2d5a2b; font-weight:700; text-align:center; padding:10px; border-radius:6px; margin-top:8px; font-size:12.5px;}
+  .rep-resultado.negativo{background:#FDEDEC; color:#943126;}
+  .rep-controles{display:flex; gap:14px; font-size:10.5px; margin-top:6px; flex-wrap:wrap;}
+  .rep-footer{margin-top:20px; font-size:9.5px; color:#999; text-align:center; border-top:1px solid #eee; padding-top:8px;}
 </style>
 </head>
 <body>
 
 <header class="app-header">
-  <h1>Sistema de Información Contable I</h1>
-  <p>Diario · Mayor · Balance de 12 columnas</p>
+  <div class="titles">
+    <h1>Sistema de Información Contable I</h1>
+    <p>Diario · Mayor · Balance de 12 columnas</p>
+  </div>
+  <button class="btn-reporte" id="btnReporte">
+    <span class="ic">📄</span>
+    <span>Reporte</span>
+  </button>
 </header>
 
 <div class="company-bar">
@@ -335,7 +407,7 @@
     <div class="card">
       <div class="card-title"><span>📊 Balance de 12 Columnas</span></div>
       <div class="card-body">
-        <p class="legend-note" style="margin-top:0;">Sumas y Saldos se calculan solos desde el Mayor. Clasificá cada cuenta como Activo, Pasivo, Pérdida o Ganancia tocando el botón junto a su nombre.</p>
+        <p class="legend-note" style="margin-top:0;">Sumas y Saldos se calculan solos desde el Mayor. Clasificá cada cuenta como Activo, Pasivo, Patrimonio Neto, Pérdida o Ganancia tocando el selector junto a su nombre. Pasivo y Patrimonio Neto se agrupan en una misma columna ("Pasivo + P.N."), tal como lo presenta la Planilla de 12 columnas del libro.</p>
         <div class="scroll-x">
           <table class="balance" id="balanceTable">
             <thead>
@@ -349,7 +421,7 @@
               <tr>
                 <th>Debe</th><th>Haber</th>
                 <th>Deudor</th><th>Acreedor</th>
-                <th>Activo</th><th>Pasivo</th>
+                <th>Activo</th><th>Pasivo + P.N.</th>
                 <th>Pérdida</th><th>Ganancia</th>
               </tr>
             </thead>
@@ -366,6 +438,8 @@
   </section>
 
 </main>
+
+<div id="reportView"></div>
 
 <div class="toast" id="toast"></div>
 
@@ -467,7 +541,19 @@ function eliminarAsiento(numero){
 
 function agregarLinea(numero, tipo){
   const a = state.asientos.find(x=>x.numero===numero);
-  a.lineas.push({cuenta:'', tipo, importe:''});
+  const nueva = {cuenta:'', tipo, importe:''};
+  if(tipo === 'debe'){
+    // Insertar después de la última línea "Debe" existente (antes de las líneas "Haber"),
+    // para que todas las líneas Debe queden siempre agrupadas arriba y las Haber abajo.
+    let insertIdx = 0;
+    for(let i=0;i<a.lineas.length;i++){
+      if(a.lineas[i].tipo === 'debe') insertIdx = i+1;
+    }
+    a.lineas.splice(insertIdx, 0, nueva);
+  } else {
+    // Las líneas "Haber" siempre van al final (ya están agrupadas al fondo del asiento).
+    a.lineas.push(nueva);
+  }
   saveState();
   renderDiario();
 }
@@ -522,7 +608,14 @@ function renderDiario(){
     asientosContainer.appendChild(div);
 
     const wrap = div.querySelector('.lineas-wrap');
+    let yaPusoSeparador = false;
     a.lineas.forEach((l, idx)=>{
+      if(l.tipo==='haber' && !yaPusoSeparador){
+        yaPusoSeparador = true;
+        const sep = document.createElement('div');
+        sep.style.cssText = 'border-top:1px dashed #d8dfe8;margin:4px 0 6px;';
+        wrap.appendChild(sep);
+      }
       const row = document.createElement('div');
       row.className = 'linea' + (l.tipo==='haber' ? ' haber' : '');
       row.innerHTML = `
@@ -697,10 +790,10 @@ function renderBalance(){
     const acreedor = c.haber > c.debe ? c.haber - c.debe : 0;
     totB += c.debe; totC += c.haber; totD += deudor; totE += acreedor;
 
-    const clasif = state.clasificacion[nombre] || null; // 'activo'|'pasivo'|'perdida'|'ganancia'
+    const clasif = state.clasificacion[nombre] || null; // 'activo'|'pasivo'|'patrimonio_neto'|'perdida'|'ganancia'
     let activo=0, pasivo=0, perdida=0, ganancia=0;
     if(clasif==='activo'){ activo = deudor; }
-    else if(clasif==='pasivo'){ pasivo = acreedor; }
+    else if(clasif==='pasivo' || clasif==='patrimonio_neto'){ pasivo = acreedor; }
     else if(clasif==='perdida'){ perdida = deudor; }
     else if(clasif==='ganancia'){ ganancia = acreedor; }
     totF+=activo; totG+=pasivo; totH+=perdida; totI+=ganancia;
@@ -708,11 +801,12 @@ function renderBalance(){
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="cuenta">
-        ${nombre}<br>
+        ${nombre}${clasif==='patrimonio_neto' ? ' <span style="font-size:9px;color:var(--navy);font-weight:700;">(P.N.)</span>' : ''}<br>
         <select class="method-select clasif-select" data-cuenta="${nombre}" style="margin-top:3px;font-size:10px;padding:3px 4px;">
           <option value="" ${!clasif?'selected':''}>Clasificar…</option>
           <option value="activo" ${clasif==='activo'?'selected':''}>Activo</option>
           <option value="pasivo" ${clasif==='pasivo'?'selected':''}>Pasivo</option>
+          <option value="patrimonio_neto" ${clasif==='patrimonio_neto'?'selected':''}>Patrimonio Neto</option>
           <option value="perdida" ${clasif==='perdida'?'selected':''}>Pérdida</option>
           <option value="ganancia" ${clasif==='ganancia'?'selected':''}>Ganancia</option>
         </select>
@@ -773,6 +867,196 @@ function renderBalance(){
     };
   });
 }
+
+/* =========================================================
+   REPORTE PDF (Diario + Mayor + Balance) vía impresión del navegador
+========================================================= */
+function fechaHoyLarga(){
+  const d = new Date();
+  return d.toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit', year:'numeric'}) +
+    ' ' + d.toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
+}
+
+function construirReporteDiarioHTML(){
+  if(state.asientos.length === 0){
+    return '<p style="font-size:11px;color:#999;">No hay asientos cargados en el Libro Diario.</p>';
+  }
+  let totDebe=0, totHaber=0;
+  let filas = '';
+  state.asientos.forEach(a=>{
+    let subDebe=0, subHaber=0;
+    a.lineas.forEach(l=>{
+      const v = parseFloat(l.importe)||0;
+      if(!l.cuenta || v<=0) return;
+      if(l.tipo==='debe') subDebe+=v; else subHaber+=v;
+    });
+    totDebe+=subDebe; totHaber+=subHaber;
+    a.lineas.forEach(l=>{
+      const v = parseFloat(l.importe)||0;
+      if(!l.cuenta || v<=0) return;
+      filas += `<tr>
+        <td>${a.fecha||''}</td>
+        <td>${a.numero}</td>
+        <td>${l.tipo==='haber' ? '&nbsp;&nbsp;&nbsp;a  '+l.cuenta : l.cuenta}</td>
+        <td>${l.tipo==='debe' ? money(v) : ''}</td>
+        <td>${l.tipo==='haber' ? money(v) : ''}</td>
+      </tr>`;
+    });
+    if(a.glosa){
+      filas += `<tr><td colspan="5" class="rep-asiento-glosa">${a.glosa}</td></tr>`;
+    }
+  });
+  const cuadra = Math.abs(totDebe-totHaber) < 0.005;
+  return `
+    <table class="rep-table">
+      <thead><tr><th>Fecha</th><th>N°</th><th>Cuenta</th><th>Debe</th><th>Haber</th></tr></thead>
+      <tbody>${filas}</tbody>
+      <tfoot><tr><td colspan="3">TOTALES</td><td>${money(totDebe)}</td><td>${money(totHaber)}</td></tr></tfoot>
+    </table>
+    <div class="rep-controles">
+      <span><b>Verificación Debe = Haber:</b> ${cuadra ? '✓ OK' : '✗ REVISAR'}</span>
+    </div>
+  `;
+}
+
+function construirReporteMayorHTML(cuentas, nombres){
+  if(nombres.length === 0){
+    return '<p style="font-size:11px;color:#999;">No hay cuentas mayorizadas.</p>';
+  }
+  let html = '';
+  nombres.forEach(nombre=>{
+    const c = cuentas[nombre];
+    const saldo = c.debe - c.haber;
+    const esDeudor = saldo >= 0;
+    let filas = '';
+    c.movs.slice().sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).forEach(m=>{
+      filas += `<tr>
+        <td>${m.fecha} · Asto. ${m.numero}</td>
+        <td>${m.tipo==='debe' ? money(m.importe) : ''}</td>
+        <td>${m.tipo==='haber' ? money(m.importe) : ''}</td>
+      </tr>`;
+    });
+    html += `
+      <div class="rep-cuenta-t">
+        <h4>${nombre}</h4>
+        <table class="rep-table">
+          <thead><tr><th>Movimiento</th><th>Debe</th><th>Haber</th></tr></thead>
+          <tbody>${filas}</tbody>
+          <tfoot><tr><td>Totales</td><td>${money(c.debe)}</td><td>${money(c.haber)}</td></tr></tfoot>
+        </table>
+        <div class="rep-saldo ${esDeudor?'':'acreedor'}">Saldo: ${money(Math.abs(saldo))} (${esDeudor?'Deudor':'Acreedor'})</div>
+      </div>
+    `;
+  });
+  return html;
+}
+
+function construirReporteBalanceHTML(cuentas, nombres){
+  if(nombres.length === 0){
+    return '<p style="font-size:11px;color:#999;">No hay cuentas para el Balance.</p>';
+  }
+  let totB=0,totC=0,totD=0,totE=0,totF=0,totG=0,totH=0,totI=0;
+  let filas = '';
+  nombres.forEach(nombre=>{
+    const c = cuentas[nombre];
+    const deudor = c.debe>=c.haber ? c.debe-c.haber : 0;
+    const acreedor = c.haber>c.debe ? c.haber-c.debe : 0;
+    totB+=c.debe; totC+=c.haber; totD+=deudor; totE+=acreedor;
+    const clasif = state.clasificacion[nombre] || null;
+    let activo=0,pasivo=0,perdida=0,ganancia=0;
+    if(clasif==='activo') activo=deudor;
+    else if(clasif==='pasivo' || clasif==='patrimonio_neto') pasivo=acreedor;
+    else if(clasif==='perdida') perdida=deudor;
+    else if(clasif==='ganancia') ganancia=acreedor;
+    totF+=activo; totG+=pasivo; totH+=perdida; totI+=ganancia;
+    const etiqueta = !clasif
+      ? ' <span style="color:#c0392b;font-size:9px;">(sin clasificar)</span>'
+      : (clasif==='patrimonio_neto' ? ' <span style="color:#2E4A7A;font-size:9px;font-weight:700;">(P.N.)</span>' : '');
+    filas += `<tr>
+      <td>${nombre}${etiqueta}</td>
+      <td>${money(c.debe)}</td><td>${money(c.haber)}</td>
+      <td>${deudor>0?money(deudor):'—'}</td><td>${acreedor>0?money(acreedor):'—'}</td>
+      <td>${activo>0?money(activo):'—'}</td><td>${pasivo>0?money(pasivo):'—'}</td>
+      <td>${perdida>0?money(perdida):'—'}</td><td>${ganancia>0?money(ganancia):'—'}</td>
+    </tr>`;
+  });
+  const resultado = totI - totH;
+  const okSumas = Math.abs(totB-totC) < 0.005;
+  const okSaldos = Math.abs(totD-totE) < 0.005;
+  const patrimActivoFinal = totF + (resultado<0 ? Math.abs(resultado) : 0);
+  const patrimPasivoFinal = totG + (resultado>0 ? resultado : 0);
+  const okPatrim = Math.abs(patrimActivoFinal - patrimPasivoFinal) < 0.005;
+
+  let html = `
+    <table class="rep-table">
+      <thead><tr>
+        <th>Cuenta</th><th>Sumas Debe</th><th>Sumas Haber</th>
+        <th>Saldo Deudor</th><th>Saldo Acreedor</th>
+        <th>Activo</th><th>Pasivo + P.N.</th><th>Pérdida</th><th>Ganancia</th>
+      </tr></thead>
+      <tbody>${filas}</tbody>
+      <tfoot><tr>
+        <td>TOTALES</td><td>${money(totB)}</td><td>${money(totC)}</td>
+        <td>${money(totD)}</td><td>${money(totE)}</td>
+        <td>${money(totF)}</td><td>${money(totG)}</td>
+        <td>${money(totH)}</td><td>${money(totI)}</td>
+      </tr></tfoot>
+    </table>
+    <div class="rep-controles">
+      <span><b>Sumas (B=C):</b> ${okSumas?'✓ OK':'✗ REVISAR'}</span>
+      <span><b>Saldos (D=E):</b> ${okSaldos?'✓ OK':'✗ REVISAR'}</span>
+      <span><b>Patrimonial (+Rdo.):</b> ${okPatrim?'✓ OK':'✗ REVISAR'}</span>
+    </div>
+  `;
+  if(totH>0 || totI>0){
+    html += `<div class="rep-resultado ${resultado<0?'negativo':''}">
+      Resultado del Ejercicio: ${resultado>=0 ? 'Ganancia '+money(resultado) : 'Pérdida '+money(Math.abs(resultado))}
+    </div>`;
+  }
+  return html;
+}
+
+function generarReporte(){
+  if(state.asientos.length === 0){
+    showToast('Cargá al menos un asiento antes de generar el reporte.');
+    return;
+  }
+  const cuentas = getCuentasUnicas();
+  const nombres = Object.keys(cuentas).sort((a,b)=>a.localeCompare(b,'es'));
+  const empresa = (state.empresa||'').trim() || 'Sin nombre de empresa';
+
+  const html = `
+    <div class="rep-header">
+      <h1>${empresa}</h1>
+      <p>Reporte Contable — Sistema de Información Contable I · Generado el ${fechaHoyLarga()}</p>
+    </div>
+
+    <div class="rep-section">
+      <div class="rep-section-title">📗 Libro Diario</div>
+      ${construirReporteDiarioHTML()}
+    </div>
+
+    <div class="rep-section rep-page-break">
+      <div class="rep-section-title">📘 Libro Mayor</div>
+      ${construirReporteMayorHTML(cuentas, nombres)}
+    </div>
+
+    <div class="rep-section rep-page-break">
+      <div class="rep-section-title">📊 Balance de Comprobación de 12 Columnas</div>
+      ${construirReporteBalanceHTML(cuentas, nombres)}
+    </div>
+
+    <div class="rep-footer">Sistema de Información Contable I — Reporte generado desde la app offline (sin conexión a internet)</div>
+  `;
+  document.getElementById('reportView').innerHTML = html;
+
+  const tituloOriginal = document.title;
+  document.title = empresa.replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/\s+/g,'_') + '_Reporte_Contable';
+  window.print();
+  document.title = tituloOriginal;
+}
+
+document.getElementById('btnReporte').addEventListener('click', generarReporte);
 
 /* =========================================================
    INSTALACIÓN COMO APP (PWA) — banner "Agregar a pantalla de inicio"
